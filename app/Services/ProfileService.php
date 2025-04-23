@@ -9,10 +9,12 @@ use Exception;
 class ProfileService
 {
     private $builder;
+    private $planService;
     
-    public function __construct(ProfileBuilderInterface $builder)
+    public function __construct(ProfileBuilderInterface $builder, PlanService $planService = null)
     {
         $this->builder = $builder;
+        $this->planService = $planService ?? new PlanService();
     }
     
     public function createUserProfile(array $data): array
@@ -25,6 +27,7 @@ class ProfileService
                 ->setBasicInfo($data['name'])
                 ->setPhysicalAttributes($data['gender'], $data['age'], $data['weight'], $data['height'])
                 ->setGoal($data['goal'])
+                ->setPlan($data['plan'])
                 ->setAccount($data['email'], $data['password'])
                 ->calculateMetrics()
                 ->build();
@@ -35,5 +38,16 @@ class ProfileService
             DB::rollBack();
             throw $e;
         }
+    }
+    
+    public function getPlanFeatures(string $planType)
+    {
+        $factory = $this->planService->getPlanFactory($planType);
+        
+        return [
+            'goalTracker' => $factory->createGoalTracker(),
+            'statistics' => $factory->createStatistics(),
+            'mealPlanner' => $factory->createMealPlanner()
+        ];
     }
 }

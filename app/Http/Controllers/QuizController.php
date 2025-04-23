@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Builders\UserProfileBuilder;
 use App\Services\ProfileService;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
@@ -24,7 +26,7 @@ class QuizController extends Controller
             'name' => 'required|string|max:255',
         ]);
         
-        // Store in session
+        // Stocker dans la session
         Session::put('quiz_data.name', $validated['name']);
         
         return redirect()->route('quiz.step2');
@@ -44,7 +46,7 @@ class QuizController extends Controller
             'height' => 'required|integer|min:100|max:250',
         ]);
         
-        // Store in session
+        // Stocker dans la session
         Session::put('quiz_data.gender', $validated['gender']);
         Session::put('quiz_data.age', $validated['age']);
         Session::put('quiz_data.weight', $validated['weight']);
@@ -64,7 +66,7 @@ class QuizController extends Controller
             'goal' => 'required|in:lose,maintain,gain',
         ]);
         
-        // Store in session
+        // Stocker dans la session
         Session::put('quiz_data.goal', $validated['goal']);
         
         return redirect()->route('quiz.step4');
@@ -78,18 +80,36 @@ class QuizController extends Controller
     public function processStep4(Request $request)
     {
         $validated = $request->validate([
+            'plan' => 'required|in:free,premium',
+        ]);
+        
+        // Store in session
+        Session::put('quiz_data.plan', $validated['plan']);
+        
+        return redirect()->route('quiz.step5');
+    }
+    
+    public function showStep5()
+    {
+        return view('quiz.step5');
+    }
+    
+    public function processStep5(Request $request)
+    {
+        $validated = $request->validate([
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'name' => 'required|string',
+            'gender' => 'required|string',
+            'age' => 'required|numeric',
+            'weight' => 'required|numeric',
+            'height' => 'required|numeric',
+            'goal' => 'required|string',
+            'plan' => 'required|string',
         ]);
         
-        // Get all quiz data from session
-        $quizData = Session::get('quiz_data');
-        
-        // Combine with final step data
-        $userData = array_merge($quizData, [
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-        ]);
+        // Utiliser directement les données validées du formulaire
+        $userData = $validated;
         
         // Use the Builder pattern to create the user profile
         $profileBuilder = new UserProfileBuilder();

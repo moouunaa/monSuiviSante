@@ -32,6 +32,12 @@ class UserProfileBuilder implements ProfileBuilderInterface
         return $this;
     }
     
+    public function setPlan(string $plan): self
+    {
+        $this->profileData['plan'] = $plan;
+        return $this;
+    }
+    
     public function setAccount(string $email, string $password): self
     {
         $this->userData['email'] = $email;

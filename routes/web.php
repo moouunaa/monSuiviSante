@@ -26,6 +26,9 @@ Route::post('/quiz/step3', [QuizController::class, 'processStep3'])->name('quiz.
 Route::get('/quiz/step4', [QuizController::class, 'showStep4'])->name('quiz.step4');
 Route::post('/quiz/step4', [QuizController::class, 'processStep4'])->name('quiz.process.step4');
 
+Route::get('/quiz/step5', [QuizController::class, 'showStep5'])->name('quiz.step5');
+Route::post('/quiz/step5', [QuizController::class, 'processStep5'])->name('quiz.process.step5');
+
 // Update the register route to point to the quiz
 Route::get('/register', function () {
     return redirect()->route('quiz.step1');
