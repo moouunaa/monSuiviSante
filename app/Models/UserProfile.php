@@ -16,6 +16,7 @@ class UserProfile extends Model
         'weight',
         'height',
         'goal',
+        'plan', // Ajout du plan
         'bmi',
         'daily_calorie_target',
         'protein_target',

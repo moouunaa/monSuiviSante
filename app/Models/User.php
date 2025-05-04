@@ -45,4 +45,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    public function foodEntries()
+    {
+        return $this->hasMany(FoodEntry::class);
+    }
 }
