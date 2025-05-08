@@ -9,6 +9,7 @@ use App\Http\Controllers\WaterTrackingController;
 use App\Http\Controllers\SleepTrackingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GoalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,4 +86,9 @@ Route::middleware(['auth'])->group(function () {
     // Profil utilisateur
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+
+    // Goals
+    Route::get('/goals/calories', [GoalController::class, 'getCalorieGoal'])->name('goals.calories');
+    Route::post('/goals/update', [GoalController::class, 'update'])->name('goals.update');
 });

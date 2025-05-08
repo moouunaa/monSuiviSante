@@ -16,13 +16,22 @@ class UserProfile extends Model
         'weight',
         'height',
         'goal',
-        'plan', // Ajout du plan
+        'plan',
+        'activity_level', // Ajout du niveau d'activité
+        'body_fat_percentage', // Ajout du pourcentage de graisse corporelle
         'bmi',
         'daily_calorie_target',
-        'protein_target',
-        'carbs_target',
-        'fat_target',
         'water_target',
+    ];
+
+    protected $casts = [
+        'age' => 'integer',
+        'weight' => 'float',
+        'height' => 'float',
+        'body_fat_percentage' => 'float',
+        'bmi' => 'float',
+        'daily_calorie_target' => 'integer',
+        'water_target' => 'integer',
     ];
 
     public function user()

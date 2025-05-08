@@ -88,15 +88,6 @@ class UserProfileBuilder implements ProfileBuilderInterface
     private function calculateMacroTargets(): void
     {
         $calories = $this->profileData['daily_calorie_target'];
-        
-        // Protein: 30% of calories (4 calories per gram)
-        $this->profileData['protein_target'] = round(($calories * 0.3) / 4);
-        
-        // Fat: 25% of calories (9 calories per gram)
-        $this->profileData['fat_target'] = round(($calories * 0.25) / 9);
-        
-        // Carbs: 45% of calories (4 calories per gram)
-        $this->profileData['carbs_target'] = round(($calories * 0.45) / 4);
     }
     
     public function build(): array

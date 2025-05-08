@@ -22,9 +22,6 @@ return new class extends Migration
             $table->string('plan');
             $table->decimal('bmi', 5, 2);
             $table->integer('daily_calorie_target');
-            $table->integer('protein_target');
-            $table->integer('carbs_target');
-            $table->integer('fat_target');
             $table->integer('water_target');
             $table->timestamps();
         });
