@@ -47,7 +47,7 @@ class UserProfileBuilder implements ProfileBuilderInterface
     
     public function calculateMetrics(): self
     {
-        // Calculate BMI
+        // Calculer BMI
         $heightInMeters = $this->profileData['height'] / 100;
         $this->profileData['bmi'] = round($this->profileData['weight'] / ($heightInMeters * $heightInMeters), 1);
         

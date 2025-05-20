@@ -14,7 +14,6 @@ class QuizController extends Controller
 {
     public function showStep1()
     {
-        // Clear any existing session data when starting a new quiz
         Session::forget('quiz_data');
         
         return view('quiz.step1');
