@@ -10,453 +10,62 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Styles -->
-    <style>
-        /* Styles inchangés */
-        :root {
-            --primary: #4034e4;
-            --primary-light: #6a61ff;
-            --secondary: #105cec;
-            --secondary-light: #4c8aff;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #1f2937;
-            --light: #f3f4f6;
-            --gray: #6b7280;
-            --gray-light: #e5e7eb;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f9fafb;
-            color: var(--dark);
-            min-height: 100vh;
-        }
-        
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 10;
-        }
-        
-        .sidebar-logo {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            margin-bottom: auto;
-        }
-        
-        .sidebar-menu li {
-            margin-bottom: 5px;
-        }
-        
-        .sidebar-menu a, .sidebar-menu button {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            border-radius: 8px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            width: 100%;
-            text-align: left;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-family: 'Nunito', sans-serif;
-        }
-        
-        .sidebar-menu a:hover, .sidebar-menu a.active, 
-        .sidebar-menu button:hover, .sidebar-menu button.active {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar-menu a i, .sidebar-menu button i {
-            margin-right: 10px;
-            font-size: 20px;
-        }
-        
-        .sidebar-footer {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-        
-        .user-name {
-            font-weight: 600;
-        }
-        
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            margin-left: 250px;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-        }
-        
-        .date {
-            color: var(--gray);
-        }
-        
-        .dashboard-content {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .welcome-message {
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
-        
-        .card {
-            background-color: #f3f4f6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .card-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        
-        /* Goals Card */
-        .goals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .goal-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .goal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-        
-        .goal-icon {
-            font-size: 24px;
-            margin-right: 15px;
-        }
-        
-        .goal-title {
-            font-weight: 600;
-            font-size: 18px;
-        }
-        
-        .goal-value {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-        
-        .goal-progress {
-            width: 100%;
-            height: 8px;
-            background-color: var(--gray-light);
-            border-radius: 4px;
-            margin-top: auto;
-            overflow: hidden;
-        }
-        
-        .goal-progress-bar {
-            height: 100%;
-            background-color: var(--primary);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-        }
-        
-        .modal {
-            background-color: white;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid var(--gray-light);
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--gray);
-        }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid var(--gray-light);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        /* Form */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid var(--gray-light);
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: 'Nunito', sans-serif;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(64, 52, 228, 0.2);
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-        }
-        
-        /* Buttons */
-        .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            font-family: 'Nunito', sans-serif;
-            border: none;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-        }
-        
-        .btn-secondary {
-            background-color: var(--gray-light);
-            color: var(--dark);
-        }
-        
-        .btn-secondary:hover {
-            background-color: #d1d5db;
-        }
-        
-        /* Calculation Methods */
-        .calculation-methods {
-            margin-top: 20px;
-        }
-        
-        .method-card {
-            background-color: var(--light);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .method-card:hover {
-            background-color: #e5e7eb;
-        }
-        
-        .method-card.selected {
-            border-color: var(--primary);
-            background-color: rgba(64, 52, 228, 0.05);
-        }
-        
-        .method-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .method-description {
-            color: var(--gray);
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .method-calories {
-            font-weight: 600;
-            color: var(--primary);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 15px;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .form-row {
-                flex-direction: column;
-                gap: 0;
-            }
-            
-            .goals-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
 <body>
     <div x-data="{ 
-        showGoalModal: false,
-        calculationMethod: '{{ $calorieGoal->calculation_method ?? 'mifflin_st_jeor' }}',
-        customCalories: {{ $calorieGoal->custom_value ?? 2000 }},
-        calculationMethods: [],
+        showWeightModal: false,
+        showFoodModal: false,
+        showExerciseModal: false,
+        showWaterModal: false,
+        showSleepModal: false,
+        
+        // Weight tracking
+        weight: '',
+        weightEntryDate: '{{ now()->format('Y-m-d') }}',
+        weightNotes: '',
+        
+        // Food tracking
+        foodName: '',
+        calories: '',
+        portionSize: '',
+        mealType: 'breakfast',
+        foodEntryDate: '{{ now()->format('Y-m-d') }}',
+        foodEntryTime: '{{ now()->format('H:i') }}',
+        foodNotes: '',
+        
+        // Exercise tracking
+        exerciseName: '',
+        duration: 30,
+        caloriesBurned: 150,
+        exerciseEntryDate: '{{ now()->format('Y-m-d') }}',
+        exerciseEntryTime: '{{ now()->format('H:i') }}',
+        exerciseNotes: '',
+        
+        // Water tracking
+        waterAmount: 250,
+        waterEntryDate: '{{ now()->format('Y-m-d') }}',
+        waterEntryTime: '{{ now()->format('H:i') }}',
+        waterNotes: '',
+        
+        // Sleep tracking
+        sleepDate: '{{ now()->subDay()->format('Y-m-d') }}',
+        sleepTime: '22:30',
+        wakeTime: '07:00',
+        quality: 3,
+        sleepNotes: '',
+        
         loading: false,
         
-        fetchCalorieGoal() {
+        logWeight() {
             this.loading = true;
-            axios.get('{{ route('goals.calories') }}')
-                .then(response => {
-                    if (response.data.success) {
-                        this.calculationMethods = response.data.calculationMethods;
-                        const goal = response.data.goal;
-                        this.calculationMethod = goal.calculation_method;
-                        this.customCalories = goal.custom_value || 2000;
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la récupération des objectifs:', error);
-                })
-                .finally(() => {
-                    this.loading = false;
-                });
-        },
-        
-        updateGoal() {
-            this.loading = true;
-            axios.post('{{ route('goals.update') }}', {
-                calculation_method: this.calculationMethod,
-                custom_value: this.customCalories,
+            axios.post('{{ route('weight-tracking.store') }}', {
+                weight: this.weight,
+                entry_date: this.weightEntryDate,
+                notes: this.weightNotes,
                 _token: '{{ csrf_token() }}'
             })
             .then(response => {
@@ -465,14 +74,117 @@
                 }
             })
             .catch(error => {
-                console.error('Erreur lors de la mise à jour des objectifs:', error);
-                alert('Une erreur est survenue lors de la mise à jour des objectifs');
+                console.error('Erreur lors de l\'enregistrement du poids:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement du poids');
             })
             .finally(() => {
                 this.loading = false;
+                this.showWeightModal = false;
+            });
+        },
+        
+        logFood() {
+            this.loading = true;
+            axios.post('{{ route('food-tracking.store') }}', {
+                food_name: this.foodName,
+                calories: this.calories,
+                portion_size: this.portionSize,
+                meal_type: this.mealType,
+                entry_date: this.foodEntryDate,
+                entry_time: this.foodEntryTime,
+                notes: this.foodNotes,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement du repas:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement du repas');
+            })
+            .finally(() => {
+                this.loading = false;
+                this.showFoodModal = false;
+            });
+        },
+        
+        logExercise() {
+            this.loading = true;
+            axios.post('{{ route('exercise-tracking.store') }}', {
+                exercise_name: this.exerciseName,
+                duration: this.duration,
+                calories_burned: this.caloriesBurned,
+                entry_date: this.exerciseEntryDate,
+                entry_time: this.exerciseEntryTime,
+                notes: this.exerciseNotes,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement de l\'exercice:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement de l\'exercice');
+            })
+            .finally(() => {
+                this.loading = false;
+                this.showExerciseModal = false;
+            });
+        },
+        
+        logWater() {
+            this.loading = true;
+            axios.post('{{ route('water-tracking.store') }}', {
+                amount: this.waterAmount,
+                entry_date: this.waterEntryDate,
+                entry_time: this.waterEntryTime,
+                notes: this.waterNotes,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement de l\'eau:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement de l\'eau');
+            })
+            .finally(() => {
+                this.loading = false;
+                this.showWaterModal = false;
+            });
+        },
+        
+        logSleep() {
+            this.loading = true;
+            axios.post('{{ route('sleep-tracking.store') }}', {
+                sleep_date: this.sleepDate,
+                sleep_time: this.sleepTime,
+                wake_time: this.wakeTime,
+                quality: this.quality,
+                notes: this.sleepNotes,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement du sommeil:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement du sommeil');
+            })
+            .finally(() => {
+                this.loading = false;
+                this.showSleepModal = false;
             });
         }
-    }" x-init="fetchCalorieGoal()">
+    }">
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
@@ -484,6 +196,8 @@
                     <li><a href="{{ route('exercise-tracking') }}"><i>🏋️</i> Exercices</a></li>
                     <li><a href="{{ route('water-tracking') }}"><i>💧</i> Hydratation</a></li>
                     <li><a href="{{ route('sleep-tracking') }}"><i>😴</i> Sommeil</a></li>
+                    <li><a href="{{ route('weight-tracking') }}"><i>⚖️</i> Poids</a></li>
+                    <li><a href="{{ route('goals.index') }}"><i>🎯</i> Objectifs</a></li>
                     <li><a href="{{ route('profile') }}"><i>⚙️</i> Paramètres</a></li>
                 </ul>
                 
@@ -512,9 +226,14 @@
                         <h1 class="page-title">Tableau de bord</h1>
                         <div class="date">{{ now()->format('l, d F Y') }}</div>
                     </div>
-                    <button class="btn btn-primary" @click="showGoalModal = true">
-                        Définir un objectif
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" @click="showWeightModal = true">
+                            Enregistrer le poids
+                        </button>
+                        <a href="{{ route('goals.index') }}" class="btn btn-primary">
+                            Définir des objectifs
+                        </a>
+                    </div>
                 </div>
                 
                 <div class="dashboard-content">
@@ -522,50 +241,159 @@
                         Bienvenue, {{ $user->name }} ! Voici votre suivi quotidien.
                     </div>
                     
-                    <!-- Goals Section -->
-                    <div class="goals-grid">
-                        <!-- Calorie Goal -->
-                        <div class="goal-card">
-                            <div class="goal-header">
-                                <div class="goal-icon">🔥</div>
-                                <div class="goal-title">Calories</div>
+                    <!-- Summary Cards - Horizontally Arranged -->
+                    <div class="summary-cards-horizontal">
+                        <!-- Calories Consumed -->
+                        <div class="summary-card calories-consumed">
+                            <div class="summary-card-content">
+                                <div class="summary-card-icon">🍽️</div>
+                                <div class="summary-card-text">
+                                    <div class="summary-card-label">Calories consommées</div>
+                                    <div class="summary-card-value">{{ $caloriesConsumed }} kcal</div>
+                                </div>
                             </div>
-                            <div class="goal-value">
-                                {{ $caloriesConsumed }} / {{ $calorieGoal->target_value ?? 2000 }} kcal
-                            </div>
-                            <div class="goal-progress">
-                                <div class="goal-progress-bar" style="width: {{ min(100, ($caloriesConsumed / ($calorieGoal->target_value ?? 2000)) * 100) }}%"></div>
-                            </div>
+                            <button class="summary-card-action" @click="showFoodModal = true">
+                                + Ajouter un repas
+                            </button>
                         </div>
                         
-                        <!-- Water Goal -->
-                        <div class="goal-card">
-                            <div class="goal-header">
-                                <div class="goal-icon">💧</div>
-                                <div class="goal-title">Hydratation</div>
+                        <!-- Calories Burned -->
+                        <div class="summary-card calories-burned">
+                            <div class="summary-card-content">
+                                <div class="summary-card-icon">🏋️</div>
+                                <div class="summary-card-text">
+                                    <div class="summary-card-label">Calories brûlées</div>
+                                    <div class="summary-card-value">{{ $caloriesBurned }} kcal</div>
+                                </div>
                             </div>
-                            <div class="goal-value">
-                                0 / {{ $waterGoal->target_value ?? 2000 }} ml
-                            </div>
-                            <div class="goal-progress">
-                                <div class="goal-progress-bar" style="width: 0%"></div>
-                            </div>
+                            <button class="summary-card-action" @click="showExerciseModal = true">
+                                + Ajouter un exercice
+                            </button>
                         </div>
                         
-                        <!-- Sleep Goal -->
-                        <div class="goal-card">
-                            <div class="goal-header">
-                                <div class="goal-icon">😴</div>
-                                <div class="goal-title">Sommeil</div>
+                        <!-- Calories Remaining -->
+                        <div class="summary-card calories-remaining">
+                            <div class="summary-card-content">
+                                <div class="summary-card-icon">🔥</div>
+                                <div class="summary-card-text">                                
+                                    <div class="summary-card-label">Calories restantes</div>
+                                    <div class="summary-card-value">{{ $caloriesRemaining }} kcal</div>
+                                </div>
                             </div>
-                            <div class="goal-value">
-                                0 / {{ ($sleepGoal->target_value ?? 480) / 60 }} heures
-                            </div>
-                            <div class="goal-progress">
-                                <div class="goal-progress-bar" style="width: 0%"></div>
+                            <div class="summary-card-text" style="text-align: right;">
+                                <div class="summary-card-label">Objectif</div>
+                                <div class="summary-card-value" style="font-size: 18px;">{{ $calorieGoal->target_value ?? 2000 }} kcal</div>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Progress Bars - Horizontally Arranged -->
+                    <div class="progress-bars-horizontal">
+                        <!-- Water Intake -->
+                        <div class="progress-bar-container water-bar">
+                            <div class="progress-bar-header">
+                                <div class="progress-bar-title">
+                                    <span class="progress-bar-icon">💧</span>
+                                    Hydratation
+                                </div>
+                                <div class="progress-bar-value">
+                                    {{ $waterConsumed ?? 0 }} / {{ $waterGoal->target_value ?? 2000 }} ml
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: {{ $waterGoal && $waterGoal->target_value > 0 ? min(100, (($waterConsumed ?? 0) / $waterGoal->target_value) * 100) : 0 }}%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                                <button class="summary-card-action" @click="showWaterModal = true">
+                                    + Ajouter de l'eau
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Sleep Time -->
+                        <div class="progress-bar-container sleep-bar">
+                            <div class="progress-bar-header">
+                                <div class="progress-bar-title">
+                                    <span class="progress-bar-icon">😴</span>
+                                    Sommeil
+                                </div>
+                                <div class="progress-bar-value">
+                                    {{ floor(($sleepDuration ?? 0) / 60) }}h {{ ($sleepDuration ?? 0) % 60 }}min / {{ floor(($sleepGoal->target_value ?? 480) / 60) }}h {{ ($sleepGoal->target_value ?? 480) % 60 }}min
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: {{ $sleepGoal && $sleepGoal->target_value > 0 ? min(100, (($sleepDuration ?? 0) / $sleepGoal->target_value) * 100) : 0 }}%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                                <button class="summary-card-action" @click="showSleepModal = true">
+                                    + Enregistrer le sommeil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Weight Chart -->
+                    @if(count($weightEntries) > 0)
+                    <div class="weight-chart-container">
+                        <div class="weight-chart-header">
+                            <div class="weight-chart-title">
+                                <span class="weight-chart-icon">⚖️</span>
+                                Évolution du poids
+                            </div>
+                            <a href="{{ route('weight-tracking') }}" class="summary-card-action">
+                                Voir l'historique
+                            </a>
+                        </div>
+                        <canvas id="weightChart" class="weight-chart-canvas"></canvas>
+                    </div>
+                    
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const ctx = document.getElementById('weightChart').getContext('2d');
+                            
+                            const weightChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: [
+                                        @foreach($weightEntries as $entry)
+                                            '{{ \Carbon\Carbon::parse($entry->entry_date)->format('d/m') }}',
+                                        @endforeach
+                                    ],
+                                    datasets: [{
+                                        label: 'Poids (kg)',
+                                        data: [
+                                            @foreach($weightEntries as $entry)
+                                                {{ $entry->weight }},
+                                            @endforeach
+                                        ],
+                                        borderColor: '#4034e4',
+                                        backgroundColor: 'rgba(64, 52, 228, 0.1)',
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: true
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: false,
+                                            ticks: {
+                                                precision: 1
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                    @endif
                     
                     <!-- Today's Meals -->
                     <div class="card">
@@ -585,64 +413,255 @@
                         @else
                             <p>Vous n'avez pas encore enregistré de repas aujourd'hui.</p>
                             <p style="margin-top: 15px;">
-                                <a href="{{ route('food-tracking') }}" class="btn btn-primary">Ajouter un repas</a>
+                                <button class="btn btn-primary" @click="showFoodModal = true">Ajouter un repas</button>
                             </p>
                         @endif
                     </div>
                 </div>
             </div>
             
-            <!-- Goal Setting Modal -->
-            <div class="modal-overlay" x-show="showGoalModal" x-transition style="display: none;">
-                <div class="modal" @click.outside="showGoalModal = false">
+            <!-- Weight Logging Modal -->
+            <div class="modal-overlay" x-show="showWeightModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showWeightModal = false">
                     <div class="modal-header">
-                        <h3 class="modal-title">Définir un objectif calorique</h3>
-                        <button class="modal-close" @click="showGoalModal = false">&times;</button>
+                        <h3 class="modal-title">Enregistrer votre poids</h3>
+                        <button class="modal-close" @click="showWeightModal = false">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p>Votre objectif calorique actuel est de <strong>{{ $calorieGoal->target_value ?? 2000 }} kcal</strong> par jour.</p>
-                        
-                        <div class="form-group" style="margin-top: 20px;">
-                            <label for="calculationMethod">Méthode de calcul</label>
-                            <select id="calculationMethod" class="form-control" x-model="calculationMethod">
-                                <option value="mifflin_st_jeor">Mifflin-St Jeor (Recommandée)</option>
-                                <option value="harris_benedict">Harris-Benedict</option>
-                                <option value="katch_mcardle">Katch-McArdle</option>
-                                <option value="custom">Personnalisé</option>
-                            </select>
+                        <div class="form-group">
+                            <label for="weight">Poids (kg)</label>
+                            <input type="number" id="weight" class="form-control" placeholder="Ex: 70.5" x-model="weight" step="0.1" min="20" max="500">
                         </div>
                         
-                        <div class="form-group" x-show="calculationMethod === 'custom'">
-                            <label for="customCalories">Calories personnalisées</label>
-                            <input type="number" id="customCalories" class="form-control" placeholder="Ex: 2000" x-model="customCalories" min="1000" max="5000">
-                            <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">
-                                Entrez une valeur entre 1000 et 5000 calories.
-                            </div>
+                        <div class="form-group">
+                            <label for="weightEntryDate">Date</label>
+                            <input type="date" id="weightEntryDate" class="form-control" x-model="weightEntryDate" max="{{ now()->format('Y-m-d') }}">
                         </div>
                         
-                        <div class="calculation-methods" x-show="calculationMethod !== 'custom' && calculationMethods.length > 0">
-                            <template x-for="method in calculationMethods" :key="method.id">
-                                <div 
-                                    class="method-card" 
-                                    :class="{ 'selected': calculationMethod === method.id }"
-                                    @click="calculationMethod = method.id"
-                                >
-                                    <div class="method-name">
-                                        <span x-text="method.name"></span>
-                                        <span x-text="method.calories + ' kcal'" class="method-calories"></span>
-                                    </div>
-                                    <div class="method-description" x-text="method.description"></div>
-                                </div>
-                            </template>
-                        </div>
-                        
-                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                            <p><strong>Note:</strong> Les objectifs d'hydratation (2L) et de sommeil (7-8h) sont fixés par défaut et ne peuvent pas être modifiés pour le moment.</p>
+                        <div class="form-group">
+                            <label for="weightNotes">Notes (optionnel)</label>
+                            <textarea id="weightNotes" class="form-control" placeholder="Ex: Après le sport" x-model="weightNotes" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" @click="showGoalModal = false">Annuler</button>
-                        <button class="btn btn-primary" @click="updateGoal()" :disabled="loading">
+                        <button class="btn btn-secondary" @click="showWeightModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="logWeight()" :disabled="loading || !weight">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Food Logging Modal -->
+            <div class="modal-overlay" x-show="showFoodModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showFoodModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter un repas</h3>
+                        <button class="modal-close" @click="showFoodModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="foodName">Nom de l'aliment</label>
+                            <input type="text" id="foodName" class="form-control" placeholder="Ex: Poulet grillé" x-model="foodName">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="calories">Calories</label>
+                                <input type="number" id="calories" class="form-control" placeholder="Ex: 350" x-model="calories" min="1" max="5000">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="portionSize">Portion</label>
+                                <input type="text" id="portionSize" class="form-control" placeholder="Ex: 200g" x-model="portionSize">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mealType">Type de repas</label>
+                            <select id="mealType" class="form-control" x-model="mealType">
+                                <option value="breakfast">Petit-déjeuner</option>
+                                <option value="lunch">Déjeuner</option>
+                                <option value="dinner">Dîner</option>
+                                <option value="snack">Collation</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="foodEntryDate">Date</label>
+                                <input type="date" id="foodEntryDate" class="form-control" x-model="foodEntryDate" max="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="foodEntryTime">Heure</label>
+                                <input type="time" id="foodEntryTime" class="form-control" x-model="foodEntryTime">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="foodNotes">Notes (optionnel)</label>
+                            <textarea id="foodNotes" class="form-control" placeholder="Ex: Fait maison" x-model="foodNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showFoodModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="logFood()" :disabled="loading || !foodName || !calories">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exercise Logging Modal -->
+            <div class="modal-overlay" x-show="showExerciseModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showExerciseModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter un exercice</h3>
+                        <button class="modal-close" @click="showExerciseModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="exerciseName">Nom de l'exercice</label>
+                            <input type="text" id="exerciseName" class="form-control" placeholder="Ex: Course à pied" x-model="exerciseName">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="duration">Durée (minutes)</label>
+                                <input type="number" id="duration" class="form-control" x-model="duration" min="1" max="300">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="caloriesBurned">Calories brûlées</label>
+                                <input type="number" id="caloriesBurned" class="form-control" x-model="caloriesBurned" min="1" max="2000">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="exerciseEntryDate">Date</label>
+                                <input type="date" id="exerciseEntryDate" class="form-control" x-model="exerciseEntryDate" max="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="exerciseEntryTime">Heure</label>
+                                <input type="time" id="exerciseEntryTime" class="form-control" x-model="exerciseEntryTime">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="exerciseNotes">Notes (optionnel)</label>
+                            <textarea id="exerciseNotes" class="form-control" placeholder="Ex: Haute intensité" x-model="exerciseNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showExerciseModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="logExercise()" :disabled="loading || !exerciseName">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Water Logging Modal -->
+            <div class="modal-overlay" x-show="showWaterModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showWaterModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter de l'eau</h3>
+                        <button class="modal-close" @click="showWaterModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="waterAmount">Quantité (ml)</label>
+                            <div class="water-amount-selector">
+                                <button class="water-amount-btn" @click="waterAmount = 100">100ml</button>
+                                <button class="water-amount-btn" @click="waterAmount = 250">250ml</button>
+                                <button class="water-amount-btn" @click="waterAmount = 500">500ml</button>
+                                <button class="water-amount-btn" @click="waterAmount = 750">750ml</button>
+                            </div>
+                            <input type="number" id="waterAmount" class="form-control" placeholder="Ex: 250" x-model="waterAmount" min="1" max="2000">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="waterEntryDate">Date</label>
+                                <input type="date" id="waterEntryDate" class="form-control" x-model="waterEntryDate" max="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="waterEntryTime">Heure</label>
+                                <input type="time" id="waterEntryTime" class="form-control" x-model="waterEntryTime">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="waterNotes">Notes (optionnel)</label>
+                            <textarea id="waterNotes" class="form-control" placeholder="Ex: Après le sport" x-model="waterNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showWaterModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="logWater()" :disabled="loading || !waterAmount">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sleep Logging Modal -->
+            <div class="modal-overlay" x-show="showSleepModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showSleepModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Enregistrer le sommeil</h3>
+                        <button class="modal-close" @click="showSleepModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="sleepDate">Date de sommeil</label>
+                            <input type="date" id="sleepDate" class="form-control" x-model="sleepDate" max="{{ now()->format('Y-m-d') }}">
+                            <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">
+                                La date correspond au jour où vous vous êtes couché.
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sleepTime">Heure de coucher</label>
+                                <input type="time" id="sleepTime" class="form-control" x-model="sleepTime">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="wakeTime">Heure de réveil</label>
+                                <input type="time" id="wakeTime" class="form-control" x-model="wakeTime">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quality">Qualité du sommeil</label>
+                            <div class="sleep-quality-input">
+                                <template x-for="i in 5">
+                                    <span 
+                                        class="sleep-quality-star" 
+                                        :class="i <= quality ? 'active' : ''"
+                                        @click="quality = i"
+                                    >★</span>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sleepNotes">Notes (optionnel)</label>
+                            <textarea id="sleepNotes" class="form-control" placeholder="Ex: Réveillé plusieurs fois" x-model="sleepNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showSleepModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="logSleep()" :disabled="loading">
                             <span x-show="!loading">Enregistrer</span>
                             <span x-show="loading">Chargement...</span>
                         </button>
@@ -651,5 +670,55 @@
             </div>
         </div>
     </div>
+    
+    <style>
+        .water-amount-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .water-amount-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .water-amount-btn:hover {
+            background-color: var(--light);
+        }
+        
+        .sleep-quality-input {
+            display: flex;
+            gap: 5px;
+            font-size: 24px;
+            margin-top: 5px;
+        }
+        
+        .sleep-quality-star {
+            cursor: pointer;
+            color: var(--gray-light);
+            transition: color 0.2s ease;
+        }
+        
+        .sleep-quality-star:hover,
+        .sleep-quality-star.active {
+            color: #f59e0b;
+        }
+
+        .weight-chart-container {
+            position: relative;
+            height: 300px; /* Fixed height for the container */
+        }
+
+        .weight-chart-canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
 </body>
 </html>

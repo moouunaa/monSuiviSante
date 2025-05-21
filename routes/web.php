@@ -10,6 +10,7 @@ use App\Http\Controllers\SleepTrackingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoalController;
+use App\Http\Controllers\WeightTrackingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,17 +48,10 @@ Route::get('/register', function () {
     return redirect()->route('quiz.step1');
 })->name('register');
 
-// Dashboard route
-//Route::get('/dashboard', function () {
-//    return view('dashboard');
-//})->name('dashboard')->middleware('auth');
-
 // Profile route
 Route::get('/profile', function () {
     return view('profile');
 })->name('profile')->middleware('auth');
-
-
 
 // Routes protégées par authentification
 Route::middleware(['auth'])->group(function () {
@@ -83,12 +77,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sleep-tracking', [SleepTrackingController::class, 'index'])->name('sleep-tracking');
     Route::post('/sleep-tracking', [SleepTrackingController::class, 'store'])->name('sleep-tracking.store');
     
+    // Suivi de poids
+    Route::get('/weight-tracking', [WeightTrackingController::class, 'index'])->name('weight-tracking');
+    Route::post('/weight-tracking', [WeightTrackingController::class, 'store'])->name('weight-tracking.store');
+    
     // Profil utilisateur
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-
     // Goals
+    Route::get('/goals', [GoalController::class, 'index'])->name('goals.index');
     Route::get('/goals/calories', [GoalController::class, 'getCalorieGoal'])->name('goals.calories');
     Route::post('/goals/update', [GoalController::class, 'update'])->name('goals.update');
+    Route::post('/goals/water/update', [GoalController::class, 'updateWaterGoal'])->name('goals.water.update');
+    Route::post('/goals/sleep/update', [GoalController::class, 'updateSleepGoal'])->name('goals.sleep.update');
+    Route::post('/goals/weight/update', [GoalController::class, 'updateWeightGoal'])->name('goals.weight.update');
 });

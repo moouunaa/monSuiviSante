@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Goal;
 use App\Models\UserProfile;
+use App\Models\WeightEntry;
 use App\Services\CalorieCalculator;
 use App\Strategies\MifflinStJeorStrategy;
 use App\Strategies\HarrisBenedictStrategy;
@@ -14,11 +15,77 @@ use Illuminate\Support\Facades\Auth;
 
 class GoalController extends Controller
 {
+    public function index()
+    {
+        $user = Auth::user();
+        
+        // Get all user goals
+        $calorieGoal = Goal::where('user_id', $user->id)
+            ->where('type', 'calories')
+            ->where('is_active', true)
+            ->first();
+            
+        $waterGoal = Goal::where('user_id', $user->id)
+            ->where('type', 'water')
+            ->where('is_active', true)
+            ->first();
+            
+        $sleepGoal = Goal::where('user_id', $user->id)
+            ->where('type', 'sleep')
+            ->where('is_active', true)
+            ->first();
+            
+        $weightGoal = Goal::where('user_id', $user->id)
+            ->where('type', 'weight')
+            ->where('is_active', true)
+            ->first();
+            
+        // Get latest weight entry
+        $latestWeight = WeightEntry::where('user_id', $user->id)
+            ->orderBy('entry_date', 'desc')
+            ->first();
+            
+        // Get available calculation methods
+        $userProfile = $user->profile;
+        $calculationMethods = [];
+        
+        if ($userProfile) {
+            $methods = [
+                'mifflin_st_jeor' => new MifflinStJeorStrategy(),
+                'harris_benedict' => new HarrisBenedictStrategy(),
+                'katch_mcardle' => new KatchMcArdleStrategy(),
+            ];
+            
+            $calculator = new CalorieCalculator();
+            
+            foreach ($methods as $key => $strategy) {
+                $calculator->setStrategy($strategy);
+                $calculationMethods[] = [
+                    'id' => $key,
+                    'name' => $strategy->getName(),
+                    'description' => $strategy->getDescription(),
+                    'calories' => $calculator->calculateDailyCalories($userProfile),
+                ];
+            }
+        }
+        
+        return view('goals', [
+            'user' => $user,
+            'calorieGoal' => $calorieGoal,
+            'waterGoal' => $waterGoal,
+            'sleepGoal' => $sleepGoal,
+            'weightGoal' => $weightGoal,
+            'latestWeight' => $latestWeight,
+            'calculationMethods' => $calculationMethods
+        ]);
+    }
+
     public function update(Request $request)
     {
         $validated = $request->validate([
             'calculation_method' => 'required|in:mifflin_st_jeor,harris_benedict,katch_mcardle,custom',
             'custom_value' => 'required_if:calculation_method,custom|nullable|integer|min:1000|max:5000',
+            'weight_goal_type' => 'nullable|in:lose,maintain,gain',
         ]);
         
         $user = Auth::user();
@@ -53,6 +120,24 @@ class GoalController extends Controller
         
         $calories = $calculator->calculateDailyCalories($userProfile);
         
+        // Adjust calories based on weight goal type if provided
+        if (isset($validated['weight_goal_type'])) {
+            switch ($validated['weight_goal_type']) {
+                case 'lose':
+                    $calories -= 500; // Deficit for weight loss
+                    break;
+                case 'gain':
+                    $calories += 500; // Surplus for weight gain
+                    break;
+                // 'maintain' doesn't need adjustment
+            }
+            
+            // Update user profile goal
+            $userProfile->update([
+                'goal' => $validated['weight_goal_type']
+            ]);
+        }
+        
         // Update or create calorie goal
         Goal::updateOrCreate(
             [
@@ -67,35 +152,87 @@ class GoalController extends Controller
             ]
         );
         
-        // Set default water goal if it doesn't exist
-        Goal::firstOrCreate(
+        return response()->json([
+            'success' => true,
+            'calories' => $calories,
+            'method' => $validated['calculation_method'],
+            'methodName' => $calculator->getStrategyName(),
+        ]);
+    }
+    
+    public function updateWaterGoal(Request $request)
+    {
+        $validated = $request->validate([
+            'target_value' => 'required|integer|min:500|max:5000',
+        ]);
+        
+        $user = Auth::user();
+        
+        Goal::updateOrCreate(
             [
                 'user_id' => $user->id,
                 'type' => 'water',
             ],
             [
-                'target_value' => 2000, // 2L in ml
-                'is_active' => true,
-            ]
-        );
-        
-        // Set default sleep goal if it doesn't exist
-        Goal::firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'type' => 'sleep',
-            ],
-            [
-                'target_value' => 480, // 8 hours in minutes
+                'target_value' => $validated['target_value'],
                 'is_active' => true,
             ]
         );
         
         return response()->json([
             'success' => true,
-            'calories' => $calories,
-            'method' => $validated['calculation_method'],
-            'methodName' => $calculator->getStrategyName(),
+        ]);
+    }
+    
+    public function updateSleepGoal(Request $request)
+    {
+        $validated = $request->validate([
+            'hours' => 'required|integer|min:4|max:12',
+            'minutes' => 'required|integer|min:0|max:59',
+        ]);
+        
+        $user = Auth::user();
+        $totalMinutes = ($validated['hours'] * 60) + $validated['minutes'];
+        
+        Goal::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'type' => 'sleep',
+            ],
+            [
+                'target_value' => $totalMinutes,
+                'is_active' => true,
+            ]
+        );
+        
+        return response()->json([
+            'success' => true,
+        ]);
+    }
+    
+    public function updateWeightGoal(Request $request)
+    {
+        $validated = $request->validate([
+            'target_weight' => 'required|numeric|min:20|max:500',
+            'target_date' => 'required|date|after:today',
+        ]);
+        
+        $user = Auth::user();
+        
+        Goal::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'type' => 'weight',
+            ],
+            [
+                'target_value' => $validated['target_weight'],
+                'target_date' => $validated['target_date'],
+                'is_active' => true,
+            ]
+        );
+        
+        return response()->json([
+            'success' => true,
         ]);
     }
     
