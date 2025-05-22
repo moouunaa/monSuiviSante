@@ -22,6 +22,29 @@
         showExerciseModal: false,
         showWaterModal: false,
         showSleepModal: false,
+        showCustomFoodModal: false,
+        showCustomExerciseModal: false,
+        
+        // New properties for food selection
+        selectedFood: '',
+        selectedFoodType: '',
+        foodQuantity: 100,
+        foodUnit: 'g',
+        
+        // New properties for exercise selection
+        selectedExercise: '',
+        selectedExerciseType: '',
+        exerciseDuration: 30,
+        exerciseSets: '',
+        exerciseReps: '',
+        
+        // Initialize foods arrays
+        foods: {{ Illuminate\Support\Js::from($foods) }},
+        customFoods: {{ Illuminate\Support\Js::from($customFoods) }},
+        
+        // Initialize exercises arrays
+        exercises: {{ Illuminate\Support\Js::from($exercises) }},
+        customExercises: {{ Illuminate\Support\Js::from($customExercises) }},
         
         // Weight tracking
         weight: '',
@@ -29,21 +52,36 @@
         weightNotes: '',
         
         // Food tracking
-        foodName: '',
-        calories: '',
-        portionSize: '',
-        mealType: 'breakfast',
         foodEntryDate: '{{ now()->format('Y-m-d') }}',
         foodEntryTime: '{{ now()->format('H:i') }}',
         foodNotes: '',
+        selectedMealTemplate: '',
+        
+        // Custom food
+        customFoodName: '',
+        customFoodCaloriesPer100g: '',
+        customFoodProteinPer100g: '',
+        customFoodCarbsPer100g: '',
+        customFoodFatPer100g: '',
+        customFoodServingSize: '',
+        customFoodCaloriesPerServing: '',
+        
+        // Meal items
+        mealItems: [],
         
         // Exercise tracking
-        exerciseName: '',
-        duration: 30,
-        caloriesBurned: 150,
         exerciseEntryDate: '{{ now()->format('Y-m-d') }}',
         exerciseEntryTime: '{{ now()->format('H:i') }}',
         exerciseNotes: '',
+        selectedWorkoutTemplate: '',
+        
+        // Custom exercise
+        customExerciseName: '',
+        customExerciseCaloriesPerMinute: '',
+        customExerciseCategory: 'cardio',
+        
+        // Workout items
+        workoutItems: [],
         
         // Water tracking
         waterAmount: 250,
@@ -60,6 +98,196 @@
         
         loading: false,
         
+        // Methods for meal building
+        addMealItem() {
+            console.log('addMealItem called');
+            console.log('selectedFood:', this.selectedFood);
+            console.log('selectedFoodType:', this.selectedFoodType);
+            console.log('foodQuantity:', this.foodQuantity);
+            console.log('foodUnit:', this.foodUnit);
+            
+            if (!this.selectedFood) {
+                alert('Veuillez sélectionner un aliment');
+                return;
+            }
+            
+            const quantity = parseFloat(this.foodQuantity);
+            if (!quantity) {
+                alert('Veuillez spécifier une quantité');
+                return;
+            }
+            
+            // Get the food name from the select element
+            const foodSelect = document.getElementById('foodSelect');
+            console.log('foodSelect element:', foodSelect);
+            const selectedOption = foodSelect.options[foodSelect.selectedIndex];
+            console.log('selectedOption:', selectedOption);
+            const foodName = selectedOption.text;
+            
+            // Calculate calories based on food type and quantity
+            let caloriesPerUnit = 0;
+            if (this.selectedFoodType === 'food') {
+                const food = this.foods.find(f => f.id == this.selectedFood);
+                console.log('found food:', food);
+                if (food) {
+                    caloriesPerUnit = food.calories_per_100g;
+                }
+            } else {
+                const food = this.customFoods.find(f => f.id == this.selectedFood);
+                console.log('found custom food:', food);
+                if (food) {
+                    caloriesPerUnit = food.calories_per_100g;
+                }
+            }
+            
+            const calories = Math.round(caloriesPerUnit * quantity / 100);
+            console.log('calculated calories:', calories);
+            
+            this.mealItems.push({
+                food_type: this.selectedFoodType,
+                food_id: this.selectedFood,
+                food_name: foodName,
+                quantity: quantity,
+                unit: this.foodUnit,
+                calories: calories
+            });
+            
+            console.log('mealItems after push:', this.mealItems);
+            
+            // Reset selection
+            this.foodQuantity = 100;
+            this.selectedFood = '';
+            this.selectedFoodType = '';
+        },
+        
+        removeMealItem(index) {
+            this.mealItems.splice(index, 1);
+        },
+        
+        getTotalMealCalories() {
+            return this.mealItems.reduce((total, item) => total + item.calories, 0);
+        },
+        
+        cloneMeal() {
+            if (!this.selectedMealTemplate) {
+                alert('Veuillez sélectionner un repas à cloner');
+                return;
+            }
+            
+            const mealId = this.selectedMealTemplate;
+            const meal = this.recentMeals.find(m => m.id == mealId);
+            
+            if (!meal) return;
+            
+            this.foodNotes = meal.notes || '';
+            
+            // Clone meal items
+            this.mealItems = [];
+            meal.meal_items.forEach(item => {
+                this.mealItems.push({
+                    food_type: item.food_type,
+                    food_id: item.food_id,
+                    food_name: item.food.name,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    calories: item.calories
+                });
+            });
+        },
+        
+        // Methods for workout building
+        addWorkoutItem() {
+            if (!this.selectedExercise) {
+                alert('Veuillez sélectionner un exercice');
+                return;
+            }
+            
+            const duration = parseInt(this.exerciseDuration);
+            if (!duration) {
+                alert('Veuillez spécifier une durée');
+                return;
+            }
+            
+            // Get the exercise name from the select element
+            const exerciseSelect = document.getElementById('exerciseSelect');
+            const selectedOption = exerciseSelect.options[exerciseSelect.selectedIndex];
+            const exerciseName = selectedOption.text;
+            
+            // Calculate calories based on exercise type and duration
+            let caloriesPerMinute = 0;
+            if (this.selectedExerciseType === 'exercise') {
+                const exercise = this.exercises.find(e => e.id == this.selectedExercise);
+                if (exercise) {
+                    caloriesPerMinute = exercise.calories_per_minute;
+                }
+            } else {
+                const exercise = this.customExercises.find(e => e.id == this.selectedExercise);
+                if (exercise) {
+                    caloriesPerMinute = exercise.calories_per_minute;
+                }
+            }
+            
+            const caloriesBurned = Math.round(caloriesPerMinute * duration);
+            
+            this.workoutItems.push({
+                exercise_type: this.selectedExerciseType,
+                exercise_id: this.selectedExercise,
+                exercise_name: exerciseName,
+                duration: duration,
+                sets: this.exerciseSets ? parseInt(this.exerciseSets) : null,
+                reps: this.exerciseReps ? parseInt(this.exerciseReps) : null,
+                calories_burned: caloriesBurned
+            });
+            
+            // Reset selection
+            this.exerciseDuration = 30;
+            this.exerciseSets = '';
+            this.exerciseReps = '';
+            this.selectedExercise = '';
+            this.selectedExerciseType = '';
+        },
+        
+        removeWorkoutItem(index) {
+            this.workoutItems.splice(index, 1);
+        },
+        
+        getTotalWorkoutCalories() {
+            return this.workoutItems.reduce((total, item) => total + item.calories_burned, 0);
+        },
+        
+        getTotalWorkoutDuration() {
+            return this.workoutItems.reduce((total, item) => total + item.duration, 0);
+        },
+        
+        cloneWorkout() {
+            if (!this.selectedWorkoutTemplate) {
+                alert('Veuillez sélectionner un entraînement à cloner');
+                return;
+            }
+            
+            const workoutId = this.selectedWorkoutTemplate;
+            const workout = this.recentWorkouts.find(w => w.id == workoutId);
+            
+            if (!workout) return;
+            
+            this.exerciseNotes = workout.notes || '';
+            
+            // Clone workout items
+            this.workoutItems = [];
+            workout.workout_items.forEach(item => {
+                this.workoutItems.push({
+                    exercise_type: item.exercise_type,
+                    exercise_id: item.exercise_id,
+                    exercise_name: item.exercise.name,
+                    duration: item.duration,
+                    sets: item.sets,
+                    reps: item.reps,
+                    calories_burned: item.calories_burned
+                });
+            });
+        },
+        
+        // Save methods
         logWeight() {
             this.loading = true;
             axios.post('{{ route('weight-tracking.store') }}', {
@@ -83,16 +311,19 @@
             });
         },
         
-        logFood() {
+        logMeal() {
+            if (this.mealItems.length === 0) {
+                alert('Veuillez ajouter au moins un aliment à votre repas');
+                return;
+            }
+            
             this.loading = true;
-            axios.post('{{ route('food-tracking.store') }}', {
-                food_name: this.foodName,
-                calories: this.calories,
-                portion_size: this.portionSize,
-                meal_type: this.mealType,
+            axios.post('{{ route('meals.store') }}', {
                 entry_date: this.foodEntryDate,
                 entry_time: this.foodEntryTime,
                 notes: this.foodNotes,
+                meal_items: this.mealItems,
+                total_calories: this.getTotalMealCalories(),
                 _token: '{{ csrf_token() }}'
             })
             .then(response => {
@@ -110,15 +341,57 @@
             });
         },
         
-        logExercise() {
+        saveCustomFood() {
             this.loading = true;
-            axios.post('{{ route('exercise-tracking.store') }}', {
-                exercise_name: this.exerciseName,
-                duration: this.duration,
-                calories_burned: this.caloriesBurned,
+            axios.post('{{ route('custom-foods.store') }}', {
+                name: this.customFoodName,
+                calories_per_100g: this.customFoodCaloriesPer100g,
+                protein_per_100g: this.customFoodProteinPer100g,
+                carbs_per_100g: this.customFoodCarbsPer100g,
+                fat_per_100g: this.customFoodFatPer100g,
+                serving_size: this.customFoodServingSize,
+                calories_per_serving: this.customFoodCaloriesPerServing,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    // Add the new custom food to the list
+                    this.customFoods.push(response.data.customFood);
+                    this.showCustomFoodModal = false;
+                    
+                    // Reset form
+                    this.customFoodName = '';
+                    this.customFoodCaloriesPer100g = '';
+                    this.customFoodProteinPer100g = '';
+                    this.customFoodCarbsPer100g = '';
+                    this.customFoodFatPer100g = '';
+                    this.customFoodServingSize = '';
+                    this.customFoodCaloriesPerServing = '';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement de l\'aliment personnalisé:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement de l\'aliment personnalisé');
+            })
+            .finally(() => {
+                this.loading = false;
+            });
+        },
+        
+        logWorkout() {
+            if (this.workoutItems.length === 0) {
+                alert('Veuillez ajouter au moins un exercice à votre entraînement');
+                return;
+            }
+            
+            this.loading = true;
+            axios.post('{{ route('workouts.store') }}', {
                 entry_date: this.exerciseEntryDate,
                 entry_time: this.exerciseEntryTime,
                 notes: this.exerciseNotes,
+                workout_items: this.workoutItems,
+                total_duration: this.getTotalWorkoutDuration(),
+                total_calories_burned: this.getTotalWorkoutCalories(),
                 _token: '{{ csrf_token() }}'
             })
             .then(response => {
@@ -127,12 +400,41 @@
                 }
             })
             .catch(error => {
-                console.error('Erreur lors de l\'enregistrement de l\'exercice:', error);
-                alert('Une erreur est survenue lors de l\'enregistrement de l\'exercice');
+                console.error('Erreur lors de l\'enregistrement de l\'entraînement:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement de l\'entraînement');
             })
             .finally(() => {
                 this.loading = false;
                 this.showExerciseModal = false;
+            });
+        },
+        
+        saveCustomExercise() {
+            this.loading = true;
+            axios.post('{{ route('custom-exercises.store') }}', {
+                name: this.customExerciseName,
+                calories_per_minute: this.customExerciseCaloriesPerMinute,
+                category: this.customExerciseCategory,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                if (response.data.success) {
+                    // Add the new custom exercise to the list
+                    this.customExercises.push(response.data.customExercise);
+                    this.showCustomExerciseModal = false;
+                    
+                    // Reset form
+                    this.customExerciseName = '';
+                    this.customExerciseCaloriesPerMinute = '';
+                    this.customExerciseCategory = 'cardio';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement de l\'exercice personnalisé:', error);
+                alert('Une erreur est survenue lors de l\'enregistrement de l\'exercice personnalisé');
+            })
+            .finally(() => {
+                this.loading = false;
             });
         },
         
@@ -184,7 +486,15 @@
                 this.showSleepModal = false;
             });
         }
-    }">
+    }"
+    x-init="
+        foods = {{ Illuminate\Support\Js::from($foods) }};
+        customFoods = {{ Illuminate\Support\Js::from($customFoods) }};
+        exercises = {{ Illuminate\Support\Js::from($exercises) }};
+        customExercises = {{ Illuminate\Support\Js::from($customExercises) }};
+        recentMeals = {{ Illuminate\Support\Js::from($recentMeals) }};
+        recentWorkouts = {{ Illuminate\Support\Js::from($recentWorkouts) }};
+    ">
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
@@ -252,7 +562,7 @@
                                     <div class="summary-card-value">{{ $caloriesConsumed }} kcal</div>
                                 </div>
                             </div>
-                            <button class="summary-card-action" @click="showFoodModal = true">
+                            <button class="summary-card-action" @click="showFoodModal = true; mealItems = [];">
                                 + Ajouter un repas
                             </button>
                         </div>
@@ -266,7 +576,7 @@
                                     <div class="summary-card-value">{{ $caloriesBurned }} kcal</div>
                                 </div>
                             </div>
-                            <button class="summary-card-action" @click="showExerciseModal = true">
+                            <button class="summary-card-action" @click="showExerciseModal = true; workoutItems = [];">
                                 + Ajouter un exercice
                             </button>
                         </div>
@@ -400,12 +710,23 @@
                         <div class="card-title">Repas d'aujourd'hui</div>
                         @if(isset($todayMeals) && count($todayMeals) > 0)
                             <ul style="list-style: none; padding: 0;">
-                                @foreach($todayMeals as $entry)
+                                @foreach($todayMeals as $meal)
                                     <li style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;">
-                                        <div style="font-weight: 600;">{{ $entry->food_name }}</div>
-                                        <div style="color: #6b7280; font-size: 14px;">{{ \Carbon\Carbon::parse($entry->entry_time)->format('H:i') }} - {{ ucfirst($entry->meal_type) }}</div>
+                                        <div style="font-weight: 600;">
+                                            {{ $meal->name ?: 'Repas de ' . ucfirst($meal->meal_type) }}
+                                            <span style="float: right; font-weight: normal;">{{ $meal->total_calories }} kcal</span>
+                                        </div>
+                                        <div style="color: #6b7280; font-size: 14px;">
+                                            {{ \Carbon\Carbon::parse($meal->entry_time)->format('H:i') }} - {{ ucfirst($meal->meal_type) }}
+                                        </div>
                                         <div style="margin-top: 5px;">
-                                            {{ $entry->calories }} kcal - {{ $entry->portion_size }}
+                                            <ul style="list-style: none; padding-left: 10px; margin-top: 5px;">
+                                                @foreach($meal->mealItems as $item)
+                                                    <li style="font-size: 14px; margin-bottom: 3px;">
+                                                        • {{ $item->food->name }} ({{ $item->quantity }}{{ $item->unit }}) - {{ $item->calories }} kcal
+                                                    </li>
+                                                @endforeach
+                                            </ul>
                                         </div>
                                     </li>
                                 @endforeach
@@ -413,7 +734,7 @@
                         @else
                             <p>Vous n'avez pas encore enregistré de repas aujourd'hui.</p>
                             <p style="margin-top: 15px;">
-                                <button class="btn btn-primary" @click="showFoodModal = true">Ajouter un repas</button>
+                                <button class="btn btn-primary" @click="showFoodModal = true; mealItems = [];">Ajouter un repas</button>
                             </p>
                         @endif
                     </div>
@@ -457,37 +778,11 @@
             <div class="modal-overlay" x-show="showFoodModal" x-transition style="display: none;">
                 <div class="modal" @click.outside="showFoodModal = false">
                     <div class="modal-header">
-                        <h3 class="modal-title">Ajouter un repas</h3>
+                        <h3 class="modal-title">Composer un repas</h3>
                         <button class="modal-close" @click="showFoodModal = false">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="foodName">Nom de l'aliment</label>
-                            <input type="text" id="foodName" class="form-control" placeholder="Ex: Poulet grillé" x-model="foodName">
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="calories">Calories</label>
-                                <input type="number" id="calories" class="form-control" placeholder="Ex: 350" x-model="calories" min="1" max="5000">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="portionSize">Portion</label>
-                                <input type="text" id="portionSize" class="form-control" placeholder="Ex: 200g" x-model="portionSize">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="mealType">Type de repas</label>
-                            <select id="mealType" class="form-control" x-model="mealType">
-                                <option value="breakfast">Petit-déjeuner</option>
-                                <option value="lunch">Déjeuner</option>
-                                <option value="dinner">Dîner</option>
-                                <option value="snack">Collation</option>
-                            </select>
-                        </div>
-                        
+                        <!-- Meal details -->
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="foodEntryDate">Date</label>
@@ -500,6 +795,87 @@
                             </div>
                         </div>
                         
+                        <!-- Clone meal section -->
+                        <div class="form-group" x-show="recentMeals && recentMeals.length > 0">
+                            <label for="selectedMealTemplate">Cloner un repas récent</label>
+                            <div class="form-row">
+                                <div class="form-group" style="flex-grow: 1;">
+                                    <select id="selectedMealTemplate" class="form-control" x-model="selectedMealTemplate">
+                                        <option value="">Sélectionner un repas</option>
+                                        <template x-for="meal in recentMeals" :key="meal.id">
+                                            <option :value="meal.id" x-text="meal.name ? meal.name + ' (' + meal.total_calories + ' kcal)' : 'Repas du ' + meal.entry_date + ' (' + meal.total_calories + ' kcal)'"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-secondary" @click="cloneMeal()">Cloner</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Add food items section -->
+                        <div class="form-group">
+                            <label>Ajouter des aliments</label>
+                            <div class="form-row">
+                                <div class="form-group" style="flex-grow: 2;">
+                                    <select id="foodSelect" class="form-control" x-model="selectedFood" @change="selectedFoodType = $event.target.options[$event.target.selectedIndex].dataset.type">
+                                        <option value="">Sélectionner un aliment</option>
+                                        <optgroup label="Aliments standards">
+                                            @foreach($foods as $food)
+                                                <option value="{{ $food->id }}" data-type="food">{{ $food->name }} ({{ $food->calories_per_100g }} kcal/100g)</option>
+                                            @endforeach
+                                        </optgroup>
+                                        @if(count($customFoods) > 0)
+                                            <optgroup label="Aliments personnalisés">
+                                                @foreach($customFoods as $food)
+                                                    <option value="{{ $food->id }}" data-type="custom_food">{{ $food->name }} ({{ $food->calories_per_100g }} kcal/100g)</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <input type="number" id="foodQuantity" class="form-control" placeholder="Quantité" x-model="foodQuantity" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <select id="foodUnit" class="form-control" x-model="foodUnit">
+                                        <option value="g">g</option>
+                                        <option value="ml">ml</option>
+                                        <option value="portion">portion</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-secondary" x-on:click="addMealItem()">Ajouter</button>
+                                </div>
+                            </div>
+                            <div style="text-align: right; margin-top: 5px;">
+                                <button type="button" class="btn btn-link" @click="showCustomFoodModal = true">+ Ajouter un aliment personnalisé</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Meal items list -->
+                        <div class="form-group" x-show="mealItems.length > 0">
+                            <label>Aliments du repas</label>
+                            <div class="meal-items-list">
+                                <template x-for="(item, index) in mealItems" :key="index">
+                                    <div class="meal-item">
+                                        <div class="meal-item-info">
+                                            <span x-text="item.food_name"></span>
+                                            <span x-text="item.quantity + item.unit"></span>
+                                            <span x-text="item.calories + ' kcal'"></span>
+                                        </div>
+                                        <button type="button" class="meal-item-remove" @click="removeMealItem(index)">&times;</button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="meal-total">
+                                <span>Total:</span>
+                                <span x-text="getTotalMealCalories() + ' kcal'"></span>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
                             <label for="foodNotes">Notes (optionnel)</label>
                             <textarea id="foodNotes" class="form-control" placeholder="Ex: Fait maison" x-model="foodNotes" rows="2"></textarea>
@@ -507,7 +883,66 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @click="showFoodModal = false">Annuler</button>
-                        <button class="btn btn-primary" @click="logFood()" :disabled="loading || !foodName || !calories">
+                        <button class="btn btn-primary" @click="logMeal()" :disabled="loading || mealItems.length === 0">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Food Modal -->
+            <div class="modal-overlay" x-show="showCustomFoodModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showCustomFoodModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter un aliment personnalisé</h3>
+                        <button class="modal-close" @click="showCustomFoodModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="customFoodName">Nom de l'aliment</label>
+                            <input type="text" id="customFoodName" class="form-control" placeholder="Ex: Mon plat maison" x-model="customFoodName">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customFoodCaloriesPer100g">Calories (pour 100g)</label>
+                                <input type="number" id="customFoodCaloriesPer100g" class="form-control" placeholder="Ex: 250" x-model="customFoodCaloriesPer100g" min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customFoodProteinPer100g">Protéines (g)</label>
+                                <input type="number" id="customFoodProteinPer100g" class="form-control" placeholder="Ex: 15" x-model="customFoodProteinPer100g" min="0" step="0.1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customFoodCarbsPer100g">Glucides (g)</label>
+                                <input type="number" id="customFoodCarbsPer100g" class="form-control" placeholder="Ex: 30" x-model="customFoodCarbsPer100g" min="0" step="0.1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customFoodFatPer100g">Lipides (g)</label>
+                                <input type="number" id="customFoodFatPer100g" class="form-control" placeholder="Ex: 10" x-model="customFoodFatPer100g" min="0" step="0.1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customFoodServingSize">Taille de portion</label>
+                                <input type="text" id="customFoodServingSize" class="form-control" placeholder="Ex: 1 assiette (250g)" x-model="customFoodServingSize">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customFoodCaloriesPerServing">Calories par portion</label>
+                                <input type="number" id="customFoodCaloriesPerServing" class="form-control" placeholder="Ex: 625" x-model="customFoodCaloriesPerServing" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showCustomFoodModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="saveCustomFood()" :disabled="loading || !customFoodName || !customFoodCaloriesPer100g">
                             <span x-show="!loading">Enregistrer</span>
                             <span x-show="loading">Chargement...</span>
                         </button>
@@ -519,27 +954,11 @@
             <div class="modal-overlay" x-show="showExerciseModal" x-transition style="display: none;">
                 <div class="modal" @click.outside="showExerciseModal = false">
                     <div class="modal-header">
-                        <h3 class="modal-title">Ajouter un exercice</h3>
+                        <h3 class="modal-title">Composer un entraînement</h3>
                         <button class="modal-close" @click="showExerciseModal = false">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="exerciseName">Nom de l'exercice</label>
-                            <input type="text" id="exerciseName" class="form-control" placeholder="Ex: Course à pied" x-model="exerciseName">
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="duration">Durée (minutes)</label>
-                                <input type="number" id="duration" class="form-control" x-model="duration" min="1" max="300">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="caloriesBurned">Calories brûlées</label>
-                                <input type="number" id="caloriesBurned" class="form-control" x-model="caloriesBurned" min="1" max="2000">
-                            </div>
-                        </div>
-                        
+                        <!-- Workout details -->
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="exerciseEntryDate">Date</label>
@@ -552,6 +971,94 @@
                             </div>
                         </div>
                         
+                        <!-- Clone workout section -->
+                        <div class="form-group" x-show="recentWorkouts && recentWorkouts.length > 0">
+                            <label for="selectedWorkoutTemplate">Cloner un entraînement récent</label>
+                            <div class="form-row">
+                                <div class="form-group" style="flex-grow: 1;">
+                                    <select id="selectedWorkoutTemplate" class="form-control" x-model="selectedWorkoutTemplate">
+                                        <option value="">Sélectionner un entraînement</option>
+                                        <template x-for="workout in recentWorkouts" :key="workout.id">
+                                            <option :value="workout.id" x-text="workout.name ? workout.name + ' (' + workout.total_calories_burned + ' kcal)' : 'Entraînement du ' + workout.entry_date + ' (' + workout.total_calories_burned + ' kcal)'"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-secondary" @click="cloneWorkout()">Cloner</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Add exercise items section -->
+                        <div class="form-group">
+                            <label>Ajouter des exercices</label>
+                            <div class="form-row">
+                                <div class="form-group" style="flex-grow: 2;">
+                                    <select id="exerciseSelect" class="form-control" x-model="selectedExercise" @change="selectedExerciseType = $event.target.options[$event.target.selectedIndex].dataset.type">
+                                        <option value="">Sélectionner un exercice</option>
+                                        <optgroup label="Exercices standards">
+                                            @foreach($exercises as $exercise)
+                                                <option value="{{ $exercise->id }}" data-type="exercise">{{ $exercise->name }} ({{ $exercise->calories_per_minute }} kcal/min)</option>
+                                            @endforeach
+                                        </optgroup>
+                                        @if(count($customExercises) > 0)
+                                            <optgroup label="Exercices personnalisés">
+                                                @foreach($customExercises as $exercise)
+                                                    <option value="{{ $exercise->id }}" data-type="custom_exercise">{{ $exercise->name }} ({{ $exercise->calories_per_minute }} kcal/min)</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <input type="number" id="exerciseDuration" class="form-control" placeholder="Durée (min)" x-model="exerciseDuration" min="1">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-secondary" @click="addWorkoutItem()">Ajouter</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label for="exerciseSets">Séries (optionnel)</label>
+                                    <input type="number" id="exerciseSets" class="form-control" placeholder="Ex: 3" x-model="exerciseSets" min="1">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="exerciseReps">Répétitions (optionnel)</label>
+                                    <input type="number" id="exerciseReps" class="form-control" placeholder="Ex: 12" x-model="exerciseReps" min="1">
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: right; margin-top: 5px;">
+                                <button type="button" class="btn btn-link" @click="showCustomExerciseModal = true">+ Ajouter un exercice personnalisé</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Workout items list -->
+                        <div class="form-group" x-show="workoutItems.length > 0">
+                            <label>Exercices de l'entraînement</label>
+                            <div class="workout-items-list">
+                                <template x-for="(item, index) in workoutItems" :key="index">
+                                    <div class="workout-item">
+                                        <div class="workout-item-info">
+                                            <span x-text="item.exercise_name"></span>
+                                            <span x-text="item.duration + ' min'"></span>
+                                            <span x-text="(item.sets && item.reps) ? item.sets + ' x ' + item.reps : ''"></span>
+                                            <span x-text="item.calories_burned + ' kcal'"></span>
+                                        </div>
+                                        <button type="button" class="workout-item-remove" @click="removeWorkoutItem(index)">&times;</button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="workout-total">
+                                <span>Total:</span>
+                                <span x-text="getTotalWorkoutDuration() + ' min, ' + getTotalWorkoutCalories() + ' kcal'"></span>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
                             <label for="exerciseNotes">Notes (optionnel)</label>
                             <textarea id="exerciseNotes" class="form-control" placeholder="Ex: Haute intensité" x-model="exerciseNotes" rows="2"></textarea>
@@ -559,7 +1066,47 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @click="showExerciseModal = false">Annuler</button>
-                        <button class="btn btn-primary" @click="logExercise()" :disabled="loading || !exerciseName">
+                        <button class="btn btn-primary" @click="logWorkout()" :disabled="loading || workoutItems.length === 0">
+                            <span x-show="!loading">Enregistrer</span>
+                            <span x-show="loading">Chargement...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Exercise Modal -->
+            <div class="modal-overlay" x-show="showCustomExerciseModal" x-transition style="display: none;">
+                <div class="modal" @click.outside="showCustomExerciseModal = false">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter un exercice personnalisé</h3>
+                        <button class="modal-close" @click="showCustomExerciseModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="customExerciseName">Nom de l'exercice</label>
+                            <input type="text" id="customExerciseName" class="form-control" placeholder="Ex: Mon exercice" x-model="customExerciseName">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customExerciseCaloriesPerMinute">Calories par minute</label>
+                                <input type="number" id="customExerciseCaloriesPerMinute" class="form-control" placeholder="Ex: 8" x-model="customExerciseCaloriesPerMinute" min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customExerciseCategory">Catégorie</label>
+                                <select id="customExerciseCategory" class="form-control" x-model="customExerciseCategory">
+                                    <option value="cardio">Cardio</option>
+                                    <option value="strength">Musculation</option>
+                                    <option value="flexibility">Flexibilité</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="showCustomExerciseModal = false">Annuler</button>
+                        <button class="btn btn-primary" @click="saveCustomExercise()" :disabled="loading || !customExerciseName || !customExerciseCaloriesPerMinute">
                             <span x-show="!loading">Enregistrer</span>
                             <span x-show="loading">Chargement...</span>
                         </button>
@@ -718,6 +1265,56 @@
         .weight-chart-canvas {
             width: 100% !important;
             height: 100% !important;
+        }
+        
+        /* Meal and workout items styling */
+        .meal-items-list,
+        .workout-items-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .meal-item,
+        .workout-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .meal-item:last-child,
+        .workout-item:last-child {
+            border-bottom: none;
+        }
+        
+        .meal-item-info,
+        .workout-item-info {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1;
+        }
+        
+        .meal-item-remove,
+        .workout-item-remove {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .meal-total,
+        .workout-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            padding: 8px 12px;
+            background-color: var(--light);
+            border-radius: 8px;
         }
     </style>
 </body>

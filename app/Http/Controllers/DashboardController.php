@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Goals\GoalGroup;
 use App\Goals\IndividualGoal;
 use App\Models\Goal;
-use App\Models\FoodEntry;
-use App\Models\ExerciseEntry;
+use App\Models\Food;
+use App\Models\CustomFood;
+use App\Models\Exercise;
+use App\Models\CustomExercise;
+use App\Models\Meal;
+use App\Models\Workout;
 use App\Models\WaterEntry;
 use App\Models\SleepEntry;
 use App\Models\WeightEntry;
@@ -78,21 +82,23 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->first();
             
-        // Get today's food entries
-        $todayEntries = FoodEntry::where('user_id', $user->id)
+        // Get today's meals
+        $todayMeals = Meal::where('user_id', $user->id)
             ->where('entry_date', $today)
+            ->with('mealItems.food')
             ->orderBy('entry_time', 'asc')
             ->get();
             
         // Calculate total calories consumed today
-        $caloriesConsumed = $todayEntries->sum('calories');
+        $caloriesConsumed = $todayMeals->sum('total_calories');
         
-        // Get today's exercise entries and calculate calories burned
-        $todayExercises = ExerciseEntry::where('user_id', $user->id)
+        // Get today's workouts and calculate calories burned
+        $todayWorkouts = Workout::where('user_id', $user->id)
             ->where('entry_date', $today)
+            ->with('workoutItems.exercise')
             ->get();
             
-        $caloriesBurned = $todayExercises->sum('calories_burned');
+        $caloriesBurned = $todayWorkouts->sum('total_calories_burned');
         
         // Get today's water entries
         $todayWater = WaterEntry::where('user_id', $user->id)
@@ -117,6 +123,37 @@ class DashboardController extends Controller
             ->take(10)
             ->get()
             ->sortBy('entry_date');
+            
+        // Get foods and exercises for dropdowns
+        $foods = Food::all();
+        $customFoods = CustomFood::where('user_id', $user->id)->get();
+        $exercises = Exercise::all();
+        $customExercises = CustomExercise::where('user_id', $user->id)->get();
+        
+        // Get recent meals and workouts for cloning
+        $recentMeals = Meal::where('user_id', $user->id)
+            ->where('is_template', true)
+            ->orWhere(function($query) use ($today, $user) {
+                $query->where('user_id', $user->id)
+                      ->where('entry_date', '>=', Carbon::today()->subDays(7)->format('Y-m-d'))
+                      ->where('entry_date', '<', $today);
+            })
+            ->with('mealItems.food')
+            ->orderBy('entry_date', 'desc')
+            ->take(5)
+            ->get();
+            
+        $recentWorkouts = Workout::where('user_id', $user->id)
+            ->where('is_template', true)
+            ->orWhere(function($query) use ($today, $user) {
+                $query->where('user_id', $user->id)
+                      ->where('entry_date', '>=', Carbon::today()->subDays(7)->format('Y-m-d'))
+                      ->where('entry_date', '<', $today);
+            })
+            ->with('workoutItems.exercise')
+            ->orderBy('entry_date', 'desc')
+            ->take(5)
+            ->get();
             
         // Create goal components using the Composite Pattern
         $calorieGoalComponent = new IndividualGoal(
@@ -160,9 +197,15 @@ class DashboardController extends Controller
             'caloriesRemaining' => $caloriesRemaining,
             'waterConsumed' => $waterConsumed,
             'sleepDuration' => $sleepDuration,
-            'todayMeals' => $todayEntries,
+            'todayMeals' => $todayMeals,
             'weightEntries' => $weightEntries,
-            'dailyGoals' => $dailyGoals
+            'dailyGoals' => $dailyGoals,
+            'foods' => $foods,
+            'customFoods' => $customFoods,
+            'exercises' => $exercises,
+            'customExercises' => $customExercises,
+            'recentMeals' => $recentMeals,
+            'recentWorkouts' => $recentWorkouts
         ]);
     }
 }
